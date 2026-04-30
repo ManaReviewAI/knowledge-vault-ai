@@ -1,0 +1,26 @@
+[project]
+name = "knowledge-vault-ai"
+version = "0.1.0"
+description = "Local-first archive search and report generation MVP."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Knowledge Vault AI contributors" }]
+dependencies = [
+  "chromadb>=0.5.0",
+  "docx2txt>=0.8",
+  "ollama>=0.3.0",
+  "pandas>=2.0.0",
+  "python-docx>=1.1.0",
+  "pypdf>=4.0.0",
+  "sentence-transformers>=3.0.0",
+  "streamlit>=1.36.0",
+]
+
+[project.scripts]
+knowledge-vault-ingest = "knowledge_vault.cli:ingest_main"
+knowledge-vault-search = "knowledge_vault.cli:search_main"
+knowledge-vault-report = "knowledge_vault.cli:report_main"
+
+[tool.setuptools.packages.find]
+include = ["knowledge_vault*"]

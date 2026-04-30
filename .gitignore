@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.streamlit/secrets.toml
+.env
+.env.*
+data/
+vault_db/
+generated_reports/
+reports_output/
+*.docx
+*.log
