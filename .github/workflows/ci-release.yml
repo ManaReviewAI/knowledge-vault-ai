@@ -1,0 +1,55 @@
+name: CI and Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install .
+      - run: python -m compileall -q knowledge_vault scripts tests
+      - run: python -m unittest discover -s tests -p "test_*.py"
+      - run: python tests/smoke_test.py
+
+  release:
+    name: Publish v0.2.0
+    needs: test
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, 'Release v0.2.0')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build
+      - run: python -m build
+      - run: git archive --format=zip --prefix=knowledge-vault-ai-0.2.0/ --output=dist/knowledge-vault-ai-0.2.0-source.zip HEAD
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.2.0
+          name: Knowledge Vault AI v0.2.0
+          generate_release_notes: true
+          files: |
+            dist/knowledge_vault_ai-0.2.0-py3-none-any.whl
+            dist/knowledge-vault-ai-0.2.0.tar.gz
+            dist/knowledge-vault-ai-0.2.0-source.zip
