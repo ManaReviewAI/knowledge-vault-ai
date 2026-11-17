@@ -62,7 +62,7 @@ ollama pull qwen3:0.6b
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -e .
 ```
 
 On macOS or Linux:
@@ -70,13 +70,13 @@ On macOS or Linux:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Run The Web UI
 
 ```bash
-streamlit run knowledge_vault/ui/app.py
+python -m streamlit run knowledge_vault/ui/app.py
 ```
 
 Then open the local URL shown by Streamlit, usually:
