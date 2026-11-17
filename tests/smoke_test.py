@@ -33,7 +33,13 @@ class DeterministicEmbedder:
 
 def main() -> None:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
-        test_settings = replace(settings, db_dir=Path(temp_dir), collection_name="smoke_test")
+        sample_data_dir = Path(__file__).resolve().parents[1] / "sample_data"
+        test_settings = replace(
+            settings,
+            data_dir=sample_data_dir,
+            db_dir=Path(temp_dir),
+            collection_name="smoke_test",
+        )
         documents = load_documents(test_settings.data_dir)
         chunks = chunk_documents(documents, test_settings.chunk_size, test_settings.chunk_overlap)
         indexed = index_chunks(chunks, DeterministicEmbedder(), test_settings)
