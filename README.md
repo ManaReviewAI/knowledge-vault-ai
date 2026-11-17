@@ -13,9 +13,9 @@ This giveaway edition is intentionally simple. It does not include proprietary M
 - Extracts text and basic metadata.
 - Splits documents into searchable chunks.
 - Stores embeddings in a local ChromaDB vector database.
-- Uses SentenceTransformers embeddings by default.
-- Supports optional Ollama embeddings.
-- Uses Ollama for local LLM report generation.
+- Uses a lightweight deterministic local embedder by default, with no model download.
+- Supports optional SentenceTransformers and Ollama embeddings.
+- Generates useful extractive reports offline and automatically uses Ollama when available.
 - Provides semantic search with source file citations and excerpts.
 - Generates structured reports from archive search results.
 - Provides a guided report UI with topic, optional location, optional timeframe, cited evidence, and `.docx` download.
@@ -48,12 +48,11 @@ knowledge-vault-ai/
 ## Requirements
 
 - Python 3.10+
-- Ollama installed locally for report generation
-- At least one Ollama chat model, for example `qwen3:0.6b`
 
-Install Ollama from [https://ollama.com](https://ollama.com), then pull a local model:
+Ollama is optional. Without it, Knowledge Vault AI produces local extractive reports from retrieved evidence. To enable LLM-written reports, install the optional integration and pull a model:
 
 ```bash
+pip install -e .[ollama]
 ollama pull qwen3:0.6b
 ```
 
@@ -83,6 +82,14 @@ Then open the local URL shown by Streamlit, usually:
 
 ```text
 http://localhost:8501
+```
+
+### Windows one-command installation
+
+The included installer keeps the virtual environment in a short, stable location under `%LOCALAPPDATA%`, avoiding legacy Windows path-length failures:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install_windows.ps1
 ```
 
 ## Add Your Own Documents
@@ -119,13 +126,13 @@ Run a semantic search:
 python scripts/search.py "birds mentioned in the archive"
 ```
 
-Generate a local report with Ollama:
+Generate a local report. This works offline and uses Ollama automatically when configured:
 
 ```bash
 python scripts/report.py "Generate a report on all birds mentioned in the archive."
 ```
 
-In the web UI, use the **Generate Report** tab for a first-pass structured report. It retrieves top archive chunks, asks the local Ollama model for a cited report, displays evidence extracts, detects simple locations and dates from retrieved excerpts, and can download the report as a Word `.docx` file.
+In the web UI, use the **Generate Report** tab for a first-pass structured report. It retrieves top archive chunks, generates a cited local report, displays evidence extracts, detects simple locations and dates from retrieved excerpts, and can download the report as a Word `.docx` file.
 
 ## Example Prompts
 
@@ -158,8 +165,9 @@ Useful environment variables:
 KV_DATA_DIR=data
 KV_DB_DIR=vault_db
 KV_COLLECTION=knowledge_vault
-KV_EMBEDDING_BACKEND=sentence_transformers
+KV_EMBEDDING_BACKEND=local
 KV_SENTENCE_MODEL=all-MiniLM-L6-v2
+KV_REPORT_BACKEND=auto
 KV_OLLAMA_BASE_URL=http://localhost:11434
 KV_OLLAMA_MODEL=qwen3:0.6b
 KV_OLLAMA_EMBED_MODEL=nomic-embed-text
@@ -167,8 +175,19 @@ KV_OLLAMA_EMBED_MODEL=nomic-embed-text
 
 Embedding backends:
 
-- `sentence_transformers` uses a local SentenceTransformers model.
-- `ollama` uses Ollama embeddings through a local Ollama server.
+- `local` is the default and needs no model or network access.
+- `sentence_transformers` uses a local SentenceTransformers model after `pip install -e .[ml]`.
+- `ollama` uses Ollama embeddings after `pip install -e .[ollama]`.
+
+Report backends:
+
+- `auto` uses Ollama when available and otherwise produces an extractive report.
+- `extractive` always produces an offline evidence report.
+- `ollama` requests the configured Ollama model and falls back safely if it is unavailable.
+
+## Downloads and automated checks
+
+Download the tested release from the [GitHub Releases page](https://github.com/ManaReviewAI/knowledge-vault-ai/releases). Every push and pull request is checked on Python 3.10 and 3.12. The release contains a source ZIP, source archive, and installable Python wheel.
 
 ## Limitations
 

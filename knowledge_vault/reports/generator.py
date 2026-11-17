@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import ollama
-
 from knowledge_vault.config.settings import Settings
 from knowledge_vault.search.searcher import SearchResult, format_citations
 
@@ -14,26 +12,44 @@ If the excerpts do not contain enough evidence, say so clearly.
 Do not invent sources, dates, people, places, species, or events."""
 
 
-def ollama_unavailable_report(settings: Settings, results: list[SearchResult]) -> str:
+def generate_extractive_report(
+    user_prompt: str,
+    results: list[SearchResult],
+    *,
+    structured: bool = False,
+) -> str:
+    """Create a useful, cited report without an LLM or network service."""
+
     sources = sorted({result.file_name for result in results})
-    source_lines = "\n".join(f"- {source}" for source in sources) or "- No source documents found."
-    return f"""# AI Summary Unavailable
+    findings = "\n".join(
+        f"- **{result.file_name}, chunk {result.chunk_index}:** {result.excerpt}"
+        for result in results[:5]
+    )
+    evidence = "\n".join(
+        f"- {result.file_name}, chunk {result.chunk_index} — “{result.excerpt}”"
+        for result in results
+    )
+    source_lines = "\n".join(f"- {source}" for source in sources)
+    heading = "# Knowledge Vault AI Report" if structured else "# Source-Grounded Archive Report"
+    return f"""{heading}
 
 ## Overview
-AI summary is unavailable because the configured Ollama model `{settings.ollama_model}` is not installed or Ollama is not reachable.
+This local extractive report addresses: {user_prompt}
 
 ## Key Findings
-- Evidence excerpts were still retrieved from the local archive.
-- Review the Evidence Extracts section below for cited source material.
+{findings}
 
 ## Evidence Extracts
-The UI displays retrieved excerpts with file names and chunk numbers below this message.
+{evidence}
+
+## Gaps and Uncertainty
+This report is assembled directly from the highest-ranked excerpts. Verify important conclusions against the original documents and refine the search if evidence is incomplete.
 
 ## Locations Mentioned
-Review the retrieved excerpts below for supported locations.
+Review the cited excerpts for supported locations.
 
 ## Timeline
-Review the retrieved excerpts below for dated evidence.
+Review the cited excerpts for supported dates and events.
 
 ## Source Documents
 {source_lines}
@@ -104,37 +120,39 @@ def generate_report(user_prompt: str, results: list[SearchResult], settings: Set
     if not results:
         return "No relevant archive excerpts were found, so no grounded report can be generated."
 
-    try:
-        client = ollama.Client(host=settings.ollama_base_url)
-        response = client.chat(
-            model=settings.ollama_model,
-            messages=[
-                {"role": "system", "content": REPORT_SYSTEM_PROMPT},
-                {"role": "user", "content": build_report_prompt(user_prompt, results)},
-            ],
-        )
-        return response["message"]["content"]
-    except ollama.ResponseError:
-        return ollama_unavailable_report(settings, results)
-    except ollama.RequestError:
-        return ollama_unavailable_report(settings, results)
+    if settings.report_backend.lower().strip() == "extractive":
+        return generate_extractive_report(user_prompt, results)
+    response = _try_ollama(build_report_prompt(user_prompt, results), settings)
+    return response or generate_extractive_report(user_prompt, results)
 
 
 def generate_structured_report(user_prompt: str, results: list[SearchResult], settings: Settings) -> str:
     if not results:
         return "No relevant archive excerpts were found, so no grounded report can be generated."
 
+    if settings.report_backend.lower().strip() == "extractive":
+        return generate_extractive_report(user_prompt, results, structured=True)
+    response = _try_ollama(build_structured_report_prompt(user_prompt, results), settings)
+    return response or generate_extractive_report(user_prompt, results, structured=True)
+
+
+def _try_ollama(prompt: str, settings: Settings) -> str | None:
+    if settings.report_backend.lower().strip() not in {"auto", "ollama"}:
+        return None
     try:
+        import ollama
+
         client = ollama.Client(host=settings.ollama_base_url)
         response = client.chat(
             model=settings.ollama_model,
             messages=[
                 {"role": "system", "content": REPORT_SYSTEM_PROMPT},
-                {"role": "user", "content": build_structured_report_prompt(user_prompt, results)},
+                {"role": "user", "content": prompt},
             ],
         )
-        return response["message"]["content"]
-    except ollama.ResponseError:
-        return ollama_unavailable_report(settings, results)
-    except ollama.RequestError:
-        return ollama_unavailable_report(settings, results)
+        return str(response["message"]["content"])
+    except (ImportError, KeyError, OSError, RuntimeError):
+        return None
+    except Exception:
+        # Client and connection exception types vary between Ollama releases.
+        return None

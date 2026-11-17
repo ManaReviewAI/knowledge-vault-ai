@@ -90,7 +90,9 @@ with st.sidebar:
     st.write(f"Data folder: `{settings.data_dir}`")
     st.write(f"Vector DB: `{settings.db_dir}`")
     st.write(f"Embedding backend: `{settings.embedding_backend}`")
-    st.write(f"Ollama model: `{settings.ollama_model}`")
+    st.write(f"Report backend: `{settings.report_backend}`")
+    if settings.report_backend in {"auto", "ollama"}:
+        st.write(f"Ollama model: `{settings.ollama_model}`")
     st.divider()
     files = discover_files(settings.data_dir)
     st.metric("Supported files found", len(files))
@@ -168,7 +170,7 @@ with tab_reports:
     )
     report_limit = st.slider("Evidence excerpts to retrieve", min_value=4, max_value=20, value=10)
     if st.button("Generate Report", disabled=not prompt.strip()):
-        with st.spinner("Retrieving evidence and asking local Ollama model..."):
+        with st.spinner("Retrieving evidence and generating a local report..."):
             results = semantic_search(prompt, cached_embedder(), settings, limit=report_limit)
             report = generate_report(prompt, results, settings)
         st.markdown(report)
