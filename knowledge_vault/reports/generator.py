@@ -33,6 +33,8 @@ def generate_extractive_report(
     heading = "# Knowledge Vault AI Report" if structured else "# Source-Grounded Archive Report"
     return f"""{heading}
 
+> **Report mode:** Evidence-only extractive report. No Ollama-generated interpretation was used.
+
 ## Overview
 This local extractive report addresses: {user_prompt}
 
@@ -123,7 +125,9 @@ def generate_report(user_prompt: str, results: list[SearchResult], settings: Set
     if settings.report_backend.lower().strip() == "extractive":
         return generate_extractive_report(user_prompt, results)
     response = _try_ollama(build_report_prompt(user_prompt, results), settings)
-    return response or generate_extractive_report(user_prompt, results)
+    if response:
+        return f"> **Report mode:** Ollama-generated report using `{settings.ollama_model}`.\n\n{response}"
+    return generate_extractive_report(user_prompt, results)
 
 
 def generate_structured_report(user_prompt: str, results: list[SearchResult], settings: Settings) -> str:
@@ -133,7 +137,9 @@ def generate_structured_report(user_prompt: str, results: list[SearchResult], se
     if settings.report_backend.lower().strip() == "extractive":
         return generate_extractive_report(user_prompt, results, structured=True)
     response = _try_ollama(build_structured_report_prompt(user_prompt, results), settings)
-    return response or generate_extractive_report(user_prompt, results, structured=True)
+    if response:
+        return f"> **Report mode:** Ollama-generated report using `{settings.ollama_model}`.\n\n{response}"
+    return generate_extractive_report(user_prompt, results, structured=True)
 
 
 def _try_ollama(prompt: str, settings: Settings) -> str | None:

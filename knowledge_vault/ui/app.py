@@ -85,6 +85,42 @@ def render_report_evidence(results, requested_location):
 st.title("Knowledge Vault AI")
 st.caption("Local-first archive search and report generation for private document collections.")
 
+active_report_backend = settings.report_backend.lower().strip()
+if active_report_backend == "extractive":
+    st.info(
+        "**Current report mode: evidence-only (no Ollama).** "
+        "Search, citations, evidence extracts, timelines, Word export, and structured extractive reports work. "
+        "AI-written summaries and cross-document interpretation require Ollama."
+    )
+elif active_report_backend == "ollama":
+    st.info(
+        f"**Current report mode: Ollama preferred (`{settings.ollama_model}`).** "
+        "When the local model is reachable, it writes and synthesises the report. "
+        "If it is unavailable, the app safely falls back to an evidence-only report."
+    )
+else:
+    st.info(
+        "**Current report mode: automatic.** "
+        "Without Ollama, the app searches and assembles cited evidence into an extractive report. "
+        "With Ollama running, it also writes summaries, connects themes, and identifies gaps or contradictions."
+    )
+
+with st.expander("What changes when Ollama is installed?"):
+    st.markdown(
+        """
+| Capability | Without Ollama | With Ollama |
+|---|---:|---:|
+| Import and index documents | ✅ | ✅ |
+| Search and retrieve cited evidence | ✅ | ✅ |
+| Dates, locations, source excerpts, and Word export | ✅ | ✅ |
+| Structured extractive report | ✅ | ✅ |
+| AI-written summaries and synthesis | — | ✅ |
+| Themes, contradictions, gaps, and nuanced interpretation | — | ✅ |
+
+The built-in search finds the evidence. Ollama is the optional intelligence layer that interprets and writes about it.
+"""
+    )
+
 with st.sidebar:
     st.header("Local Archive")
     st.write(f"Data folder: `{settings.data_dir}`")

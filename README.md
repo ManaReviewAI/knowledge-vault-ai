@@ -8,6 +8,24 @@ It is designed as a lightweight MVP for small organisations, researchers, CEOs, 
 
 This giveaway edition is intentionally simple. It does not include proprietary Mana Review AI cultural assessment logic, compliance workflows, client dashboards, Indigenous data sovereignty contract automation, GIS integration, or council reporting modules.
 
+## With Ollama vs without Ollama
+
+Knowledge Vault AI works in both modes, but Ollama changes the quality and type of report it can produce:
+
+| Capability | Without Ollama | With Ollama |
+|---|---:|---:|
+| Import PDF, Word, text, CSV, and Markdown | Yes | Yes |
+| Build a private local search index | Yes | Yes |
+| Search and retrieve cited evidence | Yes | Yes |
+| Show excerpts, dates, locations, and sources | Yes | Yes |
+| Generate a structured extractive report | Yes | Yes |
+| Export a report to Word | Yes | Yes |
+| Write an AI-generated narrative summary | No | Yes |
+| Connect themes across documents | No | Yes |
+| Identify contradictions, evidence gaps, and uncertainty | No | Yes |
+
+**In short:** the built-in search finds and organises the evidence. Ollama is the optional intelligence layer that interprets the evidence and writes a more polished report. The default `auto` mode uses Ollama when it is available and falls back to an evidence-only report when it is not.
+
 ## What It Does
 
 - Reads files from a local `data/` folder.
