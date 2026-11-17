@@ -1,5 +1,7 @@
 # Knowledge Vault AI
 
+[![CI and Release](https://github.com/ManaReviewAI/knowledge-vault-ai/actions/workflows/ci-release.yml/badge.svg)](https://github.com/ManaReviewAI/knowledge-vault-ai/actions/workflows/ci-release.yml)
+
 Knowledge Vault AI is an open-source, local-first knowledge archive framework for indexing and searching private document collections.
 
 It is designed as a lightweight MVP for small organisations, researchers, CEOs, iwi/hapu entities, legal teams, and community archives that need to work with PDFs, Word documents, text files, CSVs, Markdown files, transcripts, evidence bundles, and related archive material without sending data to the cloud.
